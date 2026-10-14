@@ -1,4 +1,4 @@
-name: Build GEN-Z Android APKs
+name: Build GEN-Z APKs
 on:
   push:
     branches: [ main ]
@@ -24,13 +24,22 @@ jobs:
         with:
           name: GEN-Z-Kisan-debug
           path: app-kisan/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
       - name: Upload Owner APK
         uses: actions/upload-artifact@v4
         with:
           name: GEN-Z-Owner-debug
           path: app-owner/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
       - name: Upload Delivery Boy APK
         uses: actions/upload-artifact@v4
         with:
           name: GEN-Z-Delivery-debug
           path: app-delivery/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+      - name: Upload Creator SEO Fixer APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CreatorSEO-Fixer-debug
+          path: app-seo-fixer/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
