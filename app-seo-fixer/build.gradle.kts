@@ -1,9 +1,9 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
-    namespace = "in.genz.seofixer"
+    namespace = "com.genz.seofixer"
     compileSdk = 35
     defaultConfig {
-        applicationId = "in.genz.seofixer"
+        applicationId = "com.genz.seofixer"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
