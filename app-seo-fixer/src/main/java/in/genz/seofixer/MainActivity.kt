@@ -21,6 +21,7 @@ class MainActivity : Activity() {
     private val green = Color.rgb(20, 143, 99)
     private lateinit var linkInput: EditText
     private lateinit var titleInput: EditText
+    private lateinit var keywordInput: EditText
     private lateinit var descInput: EditText
     private lateinit var tagsInput: EditText
     private lateinit var results: LinearLayout
@@ -68,9 +69,11 @@ class MainActivity : Activity() {
         root.addView(label("2  •  Video details", 17f, ink, true))
         root.addView(label("Link details are not fetched automatically. Enter metadata below for an honest local audit.", 13f, muted, false))
         root.addView(space(8))
-        titleInput = edit("Video title", false); root.addView(titleInput)
+        titleInput = edit("Current video title", false); root.addView(titleInput)
         root.addView(space(10))
-        descInput = edit("Video description", true); root.addView(descInput)
+        keywordInput = edit("Main target keyword / topic", false); root.addView(keywordInput)
+        root.addView(space(10))
+        descInput = edit("Current video description", true); root.addView(descInput)
         root.addView(space(10))
         tagsInput = edit("Tags, separated by commas", true); root.addView(tagsInput)
         root.addView(space(16))
@@ -90,10 +93,14 @@ class MainActivity : Activity() {
         results.removeAllViews()
         val url = linkInput.text.toString().trim()
         val title = titleInput.text.toString().trim()
+        val keyword = keywordInput.text.toString().trim()
         val desc = descInput.text.toString().trim()
         val tags = tagsInput.text.toString().split(",").map { it.trim() }.filter { it.isNotBlank() }
         val problems = mutableListOf<Pair<String, String>>()
         val suggestions = mutableListOf<Pair<String, String>>()
+        val lowerTitle = title.lowercase()
+        val lowerDesc = desc.lowercase()
+        val lowerKeyword = keyword.lowercase()
         if (url.isBlank()) {
             problems.add("YouTube link missing" to "Add a video or channel URL before scanning.")
         } else if (!isYouTubeUrl(url)) {
@@ -104,8 +111,19 @@ class MainActivity : Activity() {
         } else {
             if (title.length < 30) problems.add("Title may be too short" to "Current length: ${title.length} characters. Add specific context if it helps viewers.")
             if (title.length > 70) problems.add("Title may be too long" to "Current length: ${title.length} characters. Consider making the main topic clearer and more concise.")
-            if (title.length in 30..70) suggestions.add("Title length looks reasonable" to "Keep the main topic understandable and avoid misleading promises.")
+            if (title.length in 30..70) suggestions.add("Title length looks reasonable" to "Evidence: ${title.length} characters. Length alone does not predict ranking.")
+            val titleWords = title.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length > 2 }
+            val repeatedWords = titleWords.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+            if (repeatedWords.isNotEmpty()) problems.add("Repeated words in title" to "Evidence: ${repeatedWords.joinToString(", ")} repeats. Solution: remove unnecessary repetition while keeping the title natural.")
+            if (title.count { it.isUpperCase() } > title.length * 0.6 && title.count { it.isLetter() } > 8) problems.add("Too many capital letters" to "Evidence: most title letters are uppercase. Solution: use normal casing so the title is easier to read.")
             if (title.count { it == '|' || it == '•' || it == '-' || it == ':' } >= 4) problems.add("Title may feel cluttered" to "Try reducing separators and keeping one clear main idea.")
+        }
+        if (keyword.isBlank()) {
+            problems.add("Target keyword not entered" to "Real issue: without the main search phrase, topic relevance cannot be checked. Solution: enter the exact phrase a viewer might search for; avoid unrelated trending keywords.")
+        } else {
+            if (title.isNotBlank() && !lowerTitle.contains(lowerKeyword)) problems.add("Main keyword missing from title" to "Evidence: “$keyword” does not appear in your title. Solution: if it accurately describes the video, include the phrase naturally near the beginning.")
+            if (desc.isNotBlank() && !lowerDesc.contains(lowerKeyword)) problems.add("Main keyword missing from description" to "Evidence: “$keyword” does not appear in the description. Solution: explain the topic naturally in the opening lines if it matches the actual video.")
+            if (tags.isNotEmpty() && tags.none { it.contains(keyword, ignoreCase = true) }) suggestions.add("Keyword not represented in tags" to "Your entered tags do not include “$keyword”. Add it only if relevant; tags are optional and do not guarantee ranking.")
         }
         if (desc.isBlank()) {
             problems.add("Description missing" to "Write 2–3 useful opening sentences that accurately explain the video.")
@@ -142,13 +160,16 @@ class MainActivity : Activity() {
 
         val topic = title.split(" ", ":", "|", "-").map { it.trim() }.filter { it.length > 2 }.take(5).joinToString(" ")
         val suggestedTitle = when {
+            title.isBlank() && keyword.isNotBlank() -> "$keyword: What viewers need to know"
             title.isBlank() -> "Enter your video topic to create a title suggestion"
             title.length > 70 -> title.take(66).trimEnd() + "…"
+            keyword.isNotBlank() && !title.lowercase().contains(keyword.lowercase()) -> if ((keyword + ": " + title).length <= 70) "$keyword: $title" else "$keyword: ${title.take((67 - keyword.length).coerceAtLeast(10)).trimEnd()}…"
             title.length < 30 -> "$title | Complete Guide"
             else -> title
         }
         val suggestedDesc = when {
-            title.isBlank() -> "Add a title first to create a description suggestion."
+            keyword.isNotBlank() -> "This video is about $keyword. ${if (title.isNotBlank()) "It covers: $title. " else ""}Add 2–3 specific points actually shown in the video. Add chapters only with correct timestamps and links only when useful. Review for accuracy before publishing."
+            title.isBlank() -> "Add a title and target topic first to create a description suggestion."
             else -> "In this video, we cover $topic. Watch for the key points, practical tips, and important details.\n\nChapters and useful links: add only if they appear in your video.\n\n#${topic.split(" ").firstOrNull()?.filter { it.isLetterOrDigit() } ?: "YouTube"}"
         }
         results.addView(space(12))
