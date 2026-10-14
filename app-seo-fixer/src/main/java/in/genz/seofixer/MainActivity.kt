@@ -1,4 +1,4 @@
-package in.genz.seofixer
+package com.genz.seofixer
 
 import android.app.Activity
 import android.os.Bundle
@@ -120,7 +120,7 @@ class MainActivity : Activity() {
             if (tags.any { it.length > 30 }) problems.add("Some tags are long" to "Shorten tags to clear, relevant phrases.")
             if (tags.map { it.lowercase() }.distinct().size < tags.size) problems.add("Duplicate tags found" to "Remove repeated tags.")
         }
-        val score = (100 - problems.sumOf {
+        val score = (100 - problems.sumBy {
             when {
                 it.first.contains("invalid") || it.first.contains("missing") -> 18
                 it.first.contains("short") || it.first.contains("long") -> 10
