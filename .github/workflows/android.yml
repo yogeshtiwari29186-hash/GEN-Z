@@ -1,4 +1,4 @@
-name: Build GEN-Z APKs
+name: Build Creator SEO Fixer APK
 on:
   push:
     branches: [ main ]
@@ -17,26 +17,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Generate Gradle wrapper
         run: gradle wrapper --gradle-version 8.9
-      - name: Build all APKs
+      - name: Build APK
         run: ./gradlew assembleDebug
-      - name: Upload Kisan APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: GEN-Z-Kisan-debug
-          path: app-kisan/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
-      - name: Upload Owner APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: GEN-Z-Owner-debug
-          path: app-owner/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
-      - name: Upload Delivery Boy APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: GEN-Z-Delivery-debug
-          path: app-delivery/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
       - name: Upload Creator SEO Fixer APK
         uses: actions/upload-artifact@v4
         with:
